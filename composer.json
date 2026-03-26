@@ -1,0 +1,35 @@
+{
+    "name": "core-services/laravel-pachka-logging",
+    "description": "Send Laravel logs to Pachka messenger via webhook",
+    "license": "MIT",
+    "keywords": ["laravel", "logging", "pachka", "monolog", "webhook"],
+    "require": {
+        "php": "^8.1",
+        "monolog/monolog": "^3.0",
+        "illuminate/support": "^10.0|^11.0|^12.0",
+        "guzzlehttp/guzzle": "^7.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0|^11.0",
+        "orchestra/testbench": "^8.0|^9.0|^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Pachka\\Logging\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Pachka\\Logging\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Pachka\\Logging\\PachkaLoggerServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
