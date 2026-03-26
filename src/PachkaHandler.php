@@ -96,7 +96,7 @@ class PachkaHandler extends AbstractProcessingHandler
                 ],
             ]);
         } catch (GuzzleException $e) {
-            Log::channel('single')->error('Pachka webhook request failed: ' . $e->getMessage());
+            Log::channel('single')->error('Pachka webhook request failed: '.$e->getMessage());
         }
     }
 

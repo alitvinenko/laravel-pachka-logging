@@ -9,6 +9,7 @@ use Monolog\Logger;
 
 class PachkaLogger
 {
+    /** @param array<string, mixed> $config */
     public function __invoke(array $config): Logger
     {
         $webhookUrl = $config['webhook_url'] ?? config('pachka-logger.webhook_url', '');

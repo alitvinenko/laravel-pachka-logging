@@ -10,7 +10,6 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
 use Monolog\Level;
-use Monolog\LogRecord;
 use Monolog\Logger;
 use Orchestra\Testbench\TestCase;
 use Pachka\Logging\PachkaHandler;
