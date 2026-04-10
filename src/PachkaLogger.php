@@ -6,6 +6,7 @@ namespace Pachka\Logging;
 
 use Monolog\Level;
 use Monolog\Logger;
+use Monolog\Processor\WebProcessor;
 
 class PachkaLogger
 {
@@ -24,6 +25,6 @@ class PachkaLogger
             level: $level,
         );
 
-        return new Logger('pachka', [$handler]);
+        return new Logger('pachka', [$handler], [new WebProcessor()]);
     }
 }
