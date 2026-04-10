@@ -1,84 +1,42 @@
 # Laravel Pachka Logging
 
-Laravel-пакет для отправки логов в мессенджер [Пачка](https://pachca.com) через входящий вебхук.
+Laravel package for sending logs to [Pachka](https://pachca.com) messenger via incoming webhook.
 
-## Требования
+## Requirements
 
 - PHP 8.1+
-- Laravel 10, 11 или 12
+- Laravel 10, 11 or 12
 - Monolog 3.x
 
-## Установка
-
-### Подключение из GitLab
-
-Добавьте репозиторий в `composer.json` вашего проекта:
-
-```json
-{
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://gitlab.affilyx.com/core-services/laravel-pachka-logging.git"
-        }
-    ]
-}
-```
-
-Настройте аутентификацию. Создайте или отредактируйте `auth.json` в корне проекта:
-
-```json
-{
-    "http-basic": {
-        "gitlab.affilyx.com": {
-            "username": "___token___",
-            "password": "<ваш-deploy-token>"
-        }
-    }
-}
-```
-
-Или глобально:
-
-```bash
-composer config --global --auth http-basic.gitlab.affilyx.com ___token___ <ваш-deploy-token>
-```
-
-Установите пакет:
+## Installation
 
 ```bash
 composer require core-services/laravel-pachka-logging
 ```
 
-### Публикация конфига (опционально)
+## Configuration
 
-```bash
-php artisan vendor:publish --tag=pachka-logger-config
-```
+### 1. Set up Pachka webhook
 
-### Публикация шаблонов (опционально)
+1. Open Pachka and go to the channel where you want to receive error notifications
+2. Channel settings → Integrations → Add integration → Incoming webhook
+3. Copy the webhook URL
 
-```bash
-php artisan vendor:publish --tag=pachka-logger-views
-```
-
-## Настройка
-
-### 1. Переменные окружения
+### 2. Environment variables
 
 ```env
 PACHKA_LOGGER_WEBHOOK_URL=https://api.pachca.com/webhooks/incoming/YOUR_WEBHOOK_ID
 ```
 
-Опционально:
+Optional:
 ```env
 PACHKA_LOGGER_TEMPLATE=pachka-logging::standard
 PACHKA_LOGGER_TIMEOUT=10
 ```
 
-### 2. Добавить канал логирования
+### 3. Add logging channel
 
-В `config/logging.php` добавьте канал `pachka`:
+In `config/logging.php`:
 
 ```php
 'pachka' => [
@@ -88,62 +46,66 @@ PACHKA_LOGGER_TIMEOUT=10
 ],
 ```
 
-### 3. Включить канал
+### 4. Enable the channel
 
-Установить как основной канал:
+As the default channel:
 
 ```env
 LOG_CHANNEL=pachka
 ```
 
-Или добавить в стек:
+Or add to a stack:
 
 ```env
-LOG_STACK=single,pachka
+LOG_STACK=daily,pachka
 ```
 
-## Шаблоны сообщений
+## Usage
 
-Доступны два встроенных шаблона:
+Use standard Laravel logging — messages are sent to Pachka based on the configured level:
 
-- `pachka-logging::standard` (по умолчанию) — название приложения, окружение, timestamp и полный текст ошибки в блоке кода
-- `pachka-logging::minimal` — только название приложения и сообщение
+```php
+Log::error('Payment processing failed', ['order_id' => 123]);
+Log::critical('Database connection lost');
+```
 
-### Кастомные шаблоны
+Unhandled exceptions are captured automatically via Laravel's exception handler.
 
-Опубликуйте шаблоны и отредактируйте, или создайте свой Blade-шаблон и укажите его:
+## Message templates
+
+Two built-in templates are available:
+
+- `pachka-logging::standard` (default) — app name, environment, timestamp, call location, message and context as pretty-printed JSON
+- `pachka-logging::minimal` — app name, level and message only
+
+### Custom templates
+
+Publish and edit the views, or create your own Blade template:
+
+```bash
+php artisan vendor:publish --tag=pachka-logger-views
+```
 
 ```env
 PACHKA_LOGGER_TEMPLATE=your-custom-view-name
 ```
 
-Доступные переменные в шаблонах:
-- `$appName` — название приложения
-- `$appEnv` — окружение (production, staging и т.д.)
-- `$level_name` — уровень лога (ERROR, WARNING и т.д.)
-- `$datetime` — объект Carbon с датой/временем
-- `$formatted` — отформатированное сообщение с контекстом
-- `$message` — исходное сообщение
-- `$context` — массив контекста
-- `$extra` — массив дополнительных данных
+Available template variables:
+- `$appName` — application name
+- `$appEnv` — environment (production, staging, etc.)
+- `$level_name` — log level (ERROR, WARNING, etc.)
+- `$datetime` — Carbon instance with date/time
+- `$message` — original log message
+- `$context` — context array (Throwable instances are serialized to arrays with class, message, file and trace)
+- `$extra` — extra data (URL, HTTP method, IP from WebProcessor; file, line, class, function from IntrospectionProcessor)
+- `$formatted` — full formatted string with message and context
 
-## Настройка вебхука в Пачке
+### Publishing config
 
-1. Откройте Пачку и перейдите в канал/чат, куда хотите получать уведомления об ошибках
-2. Настройки канала -> Интеграции -> Добавить интеграцию -> Входящий вебхук
-3. Скопируйте URL вебхука
-4. Укажите его в `.env` как `PACHKA_LOGGER_WEBHOOK_URL`
-
-## Использование
-
-После настройки просто используйте стандартное логирование Laravel:
-
-```php
-// Сообщения будут отправляться в Пачку в зависимости от настроенного уровня
-Log::error('Payment processing failed', ['order_id' => 123]);
-Log::critical('Database connection lost');
+```bash
+php artisan vendor:publish --tag=pachka-logger-config
 ```
 
-## Лицензия
+## License
 
 MIT
