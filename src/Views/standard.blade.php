@@ -6,8 +6,6 @@
 ```
 {{ $message }}
 @if(!empty($context))
-@foreach($context as $key => $value)
-{{ $key }}: {{ is_array($value) ? json_encode($value, JSON_UNESCAPED_UNICODE) : $value }}
-@endforeach
+{{ json_encode($context, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) }}
 @endif
 ```
