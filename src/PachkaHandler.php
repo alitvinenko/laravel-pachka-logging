@@ -66,6 +66,7 @@ class PachkaHandler extends AbstractProcessingHandler
                     'appName' => $this->appName,
                     'appEnv' => $this->appEnv,
                     'formatted' => $record->formatted ?? $record->message,
+                    'context' => $this->serializeContext($record->context),
                 ]))->render();
             }
         } catch (\Throwable) {
@@ -99,6 +100,38 @@ class PachkaHandler extends AbstractProcessingHandler
         } catch (GuzzleException $e) {
             Log::channel('single')->error('Pachka webhook request failed: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Converts Throwable instances in context to serializable arrays with trace.
+     *
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
+    private function serializeContext(array $context): array
+    {
+        return array_map(function (mixed $value): mixed {
+            if (! $value instanceof \Throwable) {
+                return $value;
+            }
+
+            return [
+                'class' => $value::class,
+                'message' => $value->getMessage(),
+                'file' => $value->getFile().':'.$value->getLine(),
+                'trace' => array_map(
+                    fn(array $frame): string => sprintf(
+                        '%s%s%s() %s:%s',
+                        $frame['class'] ?? '',
+                        $frame['type'] ?? '',
+                        $frame['function'] ?? '',
+                        $frame['file'] ?? '[internal]',
+                        $frame['line'] ?? '',
+                    ),
+                    array_slice($value->getTrace(), 0, 10),
+                ),
+            ];
+        }, $context);
     }
 
     protected function getDefaultFormatter(): LineFormatter

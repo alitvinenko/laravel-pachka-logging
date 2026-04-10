@@ -27,7 +27,7 @@ class PachkaLogger
         );
 
         return new Logger('pachka', [$handler], [
-            new IntrospectionProcessor(skipClassesPartials: ['Illuminate\\', 'Monolog\\']),
+            new IntrospectionProcessor(skipClassesPartials: ['Illuminate\\', 'Monolog\\', 'NunoMaduro\\', 'Symfony\\']),
             new WebProcessor(),
         ]);
     }
