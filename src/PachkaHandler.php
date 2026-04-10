@@ -65,6 +65,7 @@ class PachkaHandler extends AbstractProcessingHandler
                 return View::make($template, array_merge($record->toArray(), [
                     'appName' => $this->appName,
                     'appEnv' => $this->appEnv,
+                    'formatted' => $record->formatted ?? $record->message,
                 ]))->render();
             }
         } catch (\Throwable) {
