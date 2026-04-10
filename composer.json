@@ -1,5 +1,5 @@
 {
-    "name": "core-services/laravel-pachka-logging",
+    "name": "alitvinenko/laravel-pachka-logging",
     "description": "Send Laravel logs to Pachka messenger via webhook",
     "license": "MIT",
     "keywords": ["laravel", "logging", "pachka", "monolog", "webhook"],
