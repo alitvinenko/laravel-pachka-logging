@@ -3,6 +3,9 @@
 @if(!empty($extra['url']))
 **{{ $extra['http_method'] ?? 'CLI' }}** {{ $extra['url'] }}@if(!empty($extra['ip'])) (IP: {{ $extra['ip'] }})@endif
 @endif
+@if(!empty($extra['file']))
+{{ $extra['class'] ?? '' }}{{ isset($extra['class'], $extra['function']) ? '::' : '' }}{{ $extra['function'] ?? '' }} — {{ $extra['file'] }}:{{ $extra['line'] }}
+@endif
 ```
 {{ $message }}
 @if(!empty($context))
