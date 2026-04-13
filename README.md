@@ -1,5 +1,7 @@
 # Laravel Pachka Logging
 
+[![CI](https://github.com/alitvinenko/laravel-pachka-logging/actions/workflows/ci.yml/badge.svg)](https://github.com/alitvinenko/laravel-pachka-logging/actions/workflows/ci.yml)
+
 Laravel package for sending logs to [Pachka](https://pachca.com) messenger via incoming webhook.
 
 ## Requirements
@@ -11,7 +13,7 @@ Laravel package for sending logs to [Pachka](https://pachca.com) messenger via i
 ## Installation
 
 ```bash
-composer require core-services/laravel-pachka-logging
+composer require alitvinenko/laravel-pachka-logging
 ```
 
 ## Configuration
