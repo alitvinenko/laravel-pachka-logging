@@ -117,7 +117,7 @@ class PachkaHandler extends AbstractProcessingHandler
 
             $appFrames = array_values(array_filter(
                 $value->getTrace(),
-                fn(array $frame): bool => isset($frame['file']) && ! str_contains($frame['file'], '/vendor/'),
+                fn (array $frame): bool => isset($frame['file']) && ! str_contains($frame['file'], '/vendor/'),
             ));
 
             return [
@@ -125,12 +125,12 @@ class PachkaHandler extends AbstractProcessingHandler
                 'message' => $value->getMessage(),
                 'file' => $value->getFile().':'.$value->getLine(),
                 'trace' => array_map(
-                    fn(array $frame): string => sprintf(
+                    fn (array $frame): string => sprintf(
                         '%s%s%s() %s:%s',
                         $frame['class'] ?? '',
                         $frame['type'] ?? '',
-                        $frame['function'] ?? '',
-                        $frame['file'] ?? '[internal]',
+                        $frame['function'],
+                        $frame['file'],
                         $frame['line'] ?? '',
                     ),
                     array_slice($appFrames, 0, 5),
