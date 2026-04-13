@@ -105,7 +105,7 @@ class PachkaHandler extends AbstractProcessingHandler
     /**
      * Converts Throwable instances in context to serializable arrays with trace.
      *
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      * @return array<string, mixed>
      */
     private function serializeContext(array $context): array
