@@ -9,9 +9,11 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
+use Illuminate\Support\Facades\Bus;
 use Monolog\Level;
 use Monolog\Logger;
 use Orchestra\Testbench\TestCase;
+use Pachka\Logging\Jobs\SendPachkaMessage;
 use Pachka\Logging\PachkaHandler;
 use Pachka\Logging\PachkaLoggerServiceProvider;
 
@@ -137,5 +139,108 @@ class PachkaHandlerTest extends TestCase
         // Act & Assert — should not throw
         $logger->error('This should not crash');
         $this->assertTrue(true);
+    }
+
+    public function test_async_handler_dispatches_job_to_queue(): void
+    {
+        // Arrange
+        Bus::fake();
+
+        $handler = new PachkaHandler(
+            webhookUrl: 'https://api.pachca.com/webhooks/incoming/test',
+            appName: 'TestApp',
+            appEnv: 'testing',
+            level: Level::Error,
+            async: true,
+        );
+
+        $logger = new Logger('test', [$handler]);
+
+        // Act
+        $logger->error('Async test message');
+
+        // Assert
+        Bus::assertDispatched(SendPachkaMessage::class, function (SendPachkaMessage $job) {
+            return $job->webhookUrl === 'https://api.pachca.com/webhooks/incoming/test'
+                && str_contains($job->text, 'Async test message');
+        });
+    }
+
+    public function test_async_handler_respects_queue_and_connection_config(): void
+    {
+        // Arrange
+        Bus::fake();
+
+        $handler = new PachkaHandler(
+            webhookUrl: 'https://api.pachca.com/webhooks/incoming/test',
+            appName: 'TestApp',
+            appEnv: 'testing',
+            level: Level::Error,
+            async: true,
+            queueConnection: 'redis',
+            queue: 'logs',
+        );
+
+        $logger = new Logger('test', [$handler]);
+
+        // Act
+        $logger->error('Queue config test');
+
+        // Assert
+        Bus::assertDispatched(SendPachkaMessage::class, function (SendPachkaMessage $job) {
+            return $job->connection === 'redis' && $job->queue === 'logs';
+        });
+    }
+
+    public function test_async_handler_splits_long_messages_into_multiple_jobs(): void
+    {
+        // Arrange
+        Bus::fake();
+
+        $handler = new PachkaHandler(
+            webhookUrl: 'https://api.pachca.com/webhooks/incoming/test',
+            appName: 'TestApp',
+            appEnv: 'testing',
+            async: true,
+        );
+
+        $logger = new Logger('test', [$handler]);
+
+        // Act — send a message longer than 4096 chars
+        $longMessage = str_repeat('A', 5000);
+        $logger->error($longMessage);
+
+        // Assert — should dispatch 2 jobs
+        Bus::assertDispatchedTimes(SendPachkaMessage::class, 2);
+    }
+
+    public function test_async_handler_with_http_client_sends_synchronously(): void
+    {
+        // Arrange
+        Bus::fake();
+
+        $history = [];
+        $mock = new MockHandler([new Response(200)]);
+        $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push(Middleware::history($history));
+        $httpClient = new Client(['handler' => $handlerStack]);
+
+        $handler = new PachkaHandler(
+            webhookUrl: 'https://api.pachca.com/webhooks/incoming/test',
+            appName: 'TestApp',
+            appEnv: 'testing',
+            level: Level::Error,
+            async: true,
+        );
+        $handler->setHttpClient($httpClient);
+
+        $logger = new Logger('test', [$handler]);
+
+        // Act
+        $logger->error('Should be sync despite async flag');
+
+        // Assert — sent via HTTP, not dispatched to queue
+        $this->assertCount(1, $history);
+        Bus::assertNotDispatched(SendPachkaMessage::class);
     }
 }

@@ -19,11 +19,18 @@ class PachkaLogger
         $appEnv = config('app.env', 'production');
         $level = Level::fromName($config['level'] ?? 'debug');
 
+        $async = $config['async'] ?? config('pachka-logger.async', false);
+        $queueConnection = $config['queue_connection'] ?? config('pachka-logger.queue_connection');
+        $queue = $config['queue'] ?? config('pachka-logger.queue');
+
         $handler = new PachkaHandler(
             webhookUrl: $webhookUrl,
             appName: $appName,
             appEnv: $appEnv,
             level: $level,
+            async: (bool) $async,
+            queueConnection: $queueConnection,
+            queue: $queue,
         );
 
         return new Logger('pachka', [$handler], [
