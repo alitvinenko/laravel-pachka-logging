@@ -6,12 +6,14 @@ namespace Pachka\Logging;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Contracts\Bus\Dispatcher;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Level;
 use Monolog\LogRecord;
+use Pachka\Logging\Jobs\SendPachkaMessage;
 
 class PachkaHandler extends AbstractProcessingHandler
 {
@@ -25,18 +27,34 @@ class PachkaHandler extends AbstractProcessingHandler
 
     private ?Client $httpClient = null;
 
+    private bool $async;
+
+    private ?string $queueConnection;
+
+    private ?string $queue;
+
     public function __construct(
         string $webhookUrl,
         string $appName,
         string $appEnv,
         Level $level = Level::Debug,
         bool $bubble = true,
+        bool $async = false,
+        ?string $queueConnection = null,
+        ?string $queue = null,
     ) {
+        if ($async && ! interface_exists(Dispatcher::class)) {
+            throw new \RuntimeException('Async Pachka logging requires illuminate/queue. Install it via: composer require illuminate/queue');
+        }
+
         parent::__construct($level, $bubble);
 
         $this->webhookUrl = $webhookUrl;
         $this->appName = $appName;
         $this->appEnv = $appEnv;
+        $this->async = $async;
+        $this->queueConnection = $queueConnection;
+        $this->queue = $queue;
     }
 
     public function setHttpClient(Client $client): self
@@ -52,7 +70,11 @@ class PachkaHandler extends AbstractProcessingHandler
         $chunks = str_split($text, self::MAX_MESSAGE_LENGTH);
 
         foreach ($chunks as $chunk) {
-            $this->sendMessage($chunk);
+            if ($this->async && $this->httpClient === null) {
+                $this->dispatchMessage($chunk);
+            } else {
+                $this->sendMessage($chunk);
+            }
         }
     }
 
@@ -100,6 +122,25 @@ class PachkaHandler extends AbstractProcessingHandler
         } catch (GuzzleException $e) {
             Log::channel('single')->error('Pachka webhook request failed: '.$e->getMessage());
         }
+    }
+
+    private function dispatchMessage(string $text): void
+    {
+        $job = new SendPachkaMessage(
+            webhookUrl: $this->webhookUrl,
+            text: $text,
+            timeout: (int) config('pachka-logger.timeout', 10),
+        );
+
+        if ($this->queueConnection !== null) {
+            $job->onConnection($this->queueConnection);
+        }
+
+        if ($this->queue !== null) {
+            $job->onQueue($this->queue);
+        }
+
+        app(Dispatcher::class)->dispatch($job);
     }
 
     /**

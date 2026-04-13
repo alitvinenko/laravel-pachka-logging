@@ -9,6 +9,9 @@
         "illuminate/support": "^10.0|^11.0|^12.0",
         "guzzlehttp/guzzle": "^7.0"
     },
+    "suggest": {
+        "illuminate/queue": "Required for async (queue-based) log message sending (^10.0|^11.0|^12.0)"
+    },
     "require-dev": {
         "phpunit/phpunit": "^10.0|^11.0",
         "orchestra/testbench": "^8.0|^9.0|^10.0",

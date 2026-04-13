@@ -34,6 +34,9 @@ Optional:
 ```env
 PACHKA_LOGGER_TEMPLATE=pachka-logging::standard
 PACHKA_LOGGER_TIMEOUT=10
+PACHKA_LOGGER_ASYNC=true
+PACHKA_LOGGER_QUEUE_CONNECTION=redis
+PACHKA_LOGGER_QUEUE=logs
 ```
 
 ### 3. Add logging channel
@@ -72,6 +75,48 @@ Log::critical('Database connection lost');
 ```
 
 Unhandled exceptions are captured automatically via Laravel's exception handler.
+
+## Async mode
+
+By default, log messages are sent to Pachka synchronously, which blocks the application until the HTTP request completes. For production environments, you can enable async mode to send messages via Laravel Queue:
+
+```env
+PACHKA_LOGGER_ASYNC=true
+```
+
+When async mode is enabled:
+- Messages are formatted immediately (in the request context)
+- HTTP requests to Pachka are sent by the queue worker in the background
+- Failed deliveries are retried automatically (3 attempts with 10s and 30s backoff)
+- Errors are logged to the `single` channel
+
+### Queue configuration
+
+You can isolate Pachka log jobs from your main queue:
+
+```env
+PACHKA_LOGGER_QUEUE_CONNECTION=redis
+PACHKA_LOGGER_QUEUE=logs
+```
+
+Or configure per-channel in `config/logging.php`:
+
+```php
+'pachka' => [
+    'driver' => 'custom',
+    'via' => Pachka\Logging\PachkaLogger::class,
+    'level' => 'error',
+    'async' => true,
+    'queue_connection' => 'redis',
+    'queue' => 'logs',
+],
+```
+
+Make sure your queue worker is running:
+
+```bash
+php artisan queue:work redis --queue=logs
+```
 
 ## Message templates
 
