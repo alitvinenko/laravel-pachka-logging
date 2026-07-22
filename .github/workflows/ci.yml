@@ -61,6 +61,8 @@ jobs:
           - { php: '8.3', laravel: '12', testbench: '10', larastan: '3' }
           - { php: '8.4', laravel: '11', testbench: '9', larastan: '3' }
           - { php: '8.4', laravel: '12', testbench: '10', larastan: '3' }
+          - { php: '8.3', laravel: '13', testbench: '11', larastan: '3' }
+          - { php: '8.4', laravel: '13', testbench: '11', larastan: '3' }
 
     steps:
       - uses: actions/checkout@v4
@@ -74,7 +76,9 @@ jobs:
       - name: Install dependencies
         run: |
           composer require "illuminate/support:^${{ matrix.laravel }}" "orchestra/testbench:^${{ matrix.testbench }}" "larastan/larastan:^${{ matrix.larastan }}" --no-update
-          composer update --prefer-dist --no-interaction --no-progress
+          # EOL-версии Laravel (10/11) имеют неисправленные security advisories —
+          # Composer >= 2.9 по умолчанию блокирует их установку. Для тестовой матрицы это не риск.
+          composer update --prefer-dist --no-interaction --no-progress --no-security-blocking
 
       - name: Run tests
         run: vendor/bin/phpunit
