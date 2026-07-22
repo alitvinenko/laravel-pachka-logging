@@ -6,8 +6,8 @@ Laravel package for sending logs to [Pachka](https://pachca.com) messenger via i
 
 ## Requirements
 
-- PHP 8.1+
-- Laravel 10, 11 or 12
+- PHP 8.1+ (Laravel 13 requires PHP 8.3+)
+- Laravel 10, 11, 12 or 13
 - Monolog 3.x
 
 ## Installation
