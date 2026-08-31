@@ -87,8 +87,18 @@ PACHKA_LOGGER_ASYNC=true
 When async mode is enabled:
 - Messages are formatted immediately (in the request context)
 - HTTP requests to Pachka are sent by the queue worker in the background
-- Failed deliveries are retried automatically (3 attempts with 10s and 30s backoff)
+- Failed deliveries are retried automatically (up to 5 attempts, 10s and 30s backoff)
 - Errors are logged to the `single` channel
+
+### Rate limiting
+
+If Pachka answers with `429 Too Many Requests`, the job is released back onto the queue for the
+delay named by the response's `Retry-After` header (both delay-seconds and HTTP-date forms are
+supported; 10s is used when the header is missing or unparseable). After 5 attempts the job is
+marked as failed and lands in `failed_jobs`.
+
+Rate limiting is only handled in async mode — a synchronous send logs the error and drops the
+message rather than blocking the request.
 
 ### Queue configuration
 
